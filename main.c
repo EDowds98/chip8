@@ -41,3 +41,7 @@ void fetch(__uint16_t* PC, __uint16_t* opcode,  __uint8_t* ram) {
     *opcode <<= 8;
     *opcode |= ram[*PC++];
 }
+
+void decode(__uint16_t* PC, __uint16_t* opcode,  __uint8_t* ram) {
+    //TODO big switch case
+}

@@ -1,0 +1,1 @@
+/usr/bin/gcc -g -rdynamic CMakeFiles/chip8.dir/main.c.o CMakeFiles/chip8.dir/display.c.o CMakeFiles/chip8.dir/font.c.o -o chip8  -lSDL2 

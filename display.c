@@ -20,7 +20,7 @@ void start_screen() {
             printf("Windows could not be created! SDL_Error: %s\n", SDL_GetError());
         else {
             screenSurface = SDL_GetWindowSurface(window);
-            SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0xFF, 0xFF, 0xFF));
+            SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0x00));
             SDL_UpdateWindowSurface(window);
 
             SDL_Event e;

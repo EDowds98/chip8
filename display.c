@@ -1,15 +1,19 @@
-#include <SDL2/SDL.h>
-#include <stdio.h>
-#include <stdbool.h>
 #include "display.h"
+
+#include <SDL2/SDL.h>
+#include <stdbool.h>
+#include <stdio.h>
 
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 320;
 
-void start_screen() {
-    SDL_Window* window = NULL;
+SDL_Surface* screenSurface = NULL;
+SDL_Window* window = NULL;
 
-    SDL_Surface* screenSurface = NULL;
+void clear_screen(void);
+void start_screen(void);
+
+void start_screen(void) {
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
         printf("SDL could not initialise! SDL_Error: %s\n", SDL_GetError());
@@ -20,21 +24,14 @@ void start_screen() {
             printf("Windows could not be created! SDL_Error: %s\n", SDL_GetError());
         else {
             screenSurface = SDL_GetWindowSurface(window);
-            SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0x00));
+            SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0xFF, 0xFF, 0xFF));
             SDL_UpdateWindowSurface(window);
-
-            SDL_Event e;
-            bool quit = false;
-            while (quit == false) {
-                while (SDL_PollEvent(&e)) {
-                    if (e.type == SDL_QUIT) quit = true;
-                }
-            }
         }
     }
-    // Destroy window
-    SDL_DestroyWindow(window);
+}
 
-    // Quit SDL subsystems
-    SDL_Quit();
+void clear_screen(void) {
+    screenSurface = SDL_GetWindowSurface(window);
+    SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0x00));
+    SDL_UpdateWindowSurface(window);
 }

@@ -10,7 +10,7 @@
 void load_font_data(__uint8_t* ram);
 void load_program(__uint8_t* ram, char* filename);
 void fetch(__uint16_t* PC, __uint16_t* opcode, __uint8_t* ram);
-void decode(__uint16_t* PC, __uint16_t opcode, __uint8_t* ram);
+void decode(__uint16_t* PC, __uint16_t opcode, __uint8_t* ram, __uint8_t* registers, int index_reg);
 
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 320;
@@ -18,7 +18,6 @@ const int SCREEN_HEIGHT = 320;
 SDL_Surface* screenSurface = NULL;
 SDL_Window* window = NULL;
 
-int main(int argc, char* argv[]) {
     // VARIABLE DECLARATION
     __uint8_t RAM[4096] = {0};
     // program counter
@@ -31,7 +30,9 @@ int main(int argc, char* argv[]) {
     __uint16_t opcode = 0x0000;
 
     // variable registers
-    __uint8_t V0, V1, V2, V3, V4, V5, V6, V7, V8, V9, VA, VB, VC, VD, VE, VF;
+    __uint8_t V[0x10] = {0};
+
+int main(int argc, char* argv[]) {
 
     load_font_data(RAM);
     load_program(RAM, argv[1]);
@@ -53,7 +54,7 @@ int main(int argc, char* argv[]) {
     while (1) {
         fetch(&PC, &opcode, RAM);
         sleep(1);
-        decode(&PC, opcode, RAM);
+        decode(&PC, opcode, RAM, V, I);
     }
     SDL_Event e;
     bool quit = false;
@@ -95,24 +96,53 @@ void fetch(__uint16_t* PC, __uint16_t* opcode, __uint8_t* ram) {
     (*PC)++;
 }
 
-void decode(__uint16_t* PC, __uint16_t opcode, __uint8_t* ram) {
-    // Get individual nibbles
+void decode(__uint16_t opcode, __uint8_t* ram, __uint8_t* registers, int index_reg) {
+    // split into 4 nibbles
     printf("here is opcode: %X %d\n", opcode, opcode);
-    __uint16_t nibble1, nibble2, nibble3, nibble4;
-    nibble1 = opcode >> 12;
-    nibble2 = opcode >> 8;
-    nibble3 = opcode >> 4;
-    nibble4 = opcode << 12;
-    printf("print all nibbles individually; should get 00e0: %x %x %x %x\n", nibble1, nibble2, nibble3, nibble4);
+
+    // i am big endian here
+    __uint8_t nibble1, nibble2, nibble3, nibble4;
+    nibble1 = ((opcode >> 12) & 0xF);
+    nibble2 = ((opcode >> 8) & 0xF);
+    nibble3 = ((opcode >> 4) & 0xF);
+    nibble4 = (opcode & 0xF);
+
+    printf("print bytes individually; should get %x: %x %x %x %x\n", opcode, nibble1, nibble2, nibble3, nibble4);
     // TODO big switch case
-    switch (opcode) {
-        case 0x00e0:
-            printf("here1\n");
+    __uint8_t X = ((opcode >> 8) & 0x000F);
+    __uint8_t Y = ((opcode >> 4) & 0x000F);
+    __uint8_t N = opcode & 0x000F;
+    __uint8_t NN = opcode & 0x00FF;
+    __uint16_t NNN = opcode & 0x0FFF;
+
+    int x_coord = (V[X] * 10) % 640;
+    int y_coord = (V[Y] * 10) % 320;
+
+    switch (opcode & 0xF000) {
+        case 0x0:   // 0x00E0: clear screen
+            printf("clear screen instruction\n");
             screenSurface = SDL_GetWindowSurface(window);
             SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0x00));
             SDL_UpdateWindowSurface(window);
             break;
-        case 0xd01f:
+        case 0x1000:  // 1NNN: JUMP
+            *PC = NNN;
+            printf("program counter after JUMP: %x\n", *PC);
+            break;
+        case 0x6000:  // 6XNN: set register VX
+            printf("In set register instruction 0x6XNN\n");
+            registers[X] = NN;
+        case 0x7000:    // 7XNN: Add
+            printf("in ADD instruction 0x7XNN\n");
+            registers[X] += NN;
+            break;
+        case 0xA000: // ANNN: Set index register I
+            printf("in Set index register instruction 0xA000\n");
+            index_reg = NNN;
+            break;
+        case 0xD000: // DXYN: Display/Draw
             break;
     }
 }
+
+// command to check hex file: xxd -l 120 -ps -c 20 'IBM Logo.ch8'
